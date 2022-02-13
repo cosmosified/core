@@ -56,7 +56,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Install ansible and deps
         run: |
-          pip install ansible-base dnspython
+          pip install ansible-base dnspython parameterized pyyaml
           ansible-galaxy collection install community.internal_test_tools
 
       - name: Run ansible tests
