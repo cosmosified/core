@@ -57,7 +57,7 @@ jobs:
       - name: Install ansible and deps
         run: |
           pip install ansible-base dnspython
-          ansible-galaxy collection install community.general
+          ansible-galaxy collection install community.internal_test_tools
 
       - name: Run ansible tests
         run: |
