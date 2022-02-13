@@ -56,10 +56,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Install ansible and deps
         run: |
-          pip install -U pip 
-          pip install -U pytest 
-          pip install 'urllib3<1.27,>=1.25.4'
-          pip install ansible-base dnspython jinja2 MarkupSafe parameterized pycodestyle 'pylint>=2.4.0' pyparsing pytest-xdist pyyaml 'six>=1.12'
+          pip install ansible-base dnspython
 
       - name: Run ansible tests
         run: |
