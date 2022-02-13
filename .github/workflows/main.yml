@@ -64,7 +64,7 @@ jobs:
           dir=$(pwd)
           mkdir -p ~/.ansible/collections/ansible_collections/pfsensible
           cd ~/.ansible/collections/ansible_collections/pfsensible
-          mv $dir core
+          cp -al $dir core
           cd core
           ansible-test sanity --requirements --python ${{ matrix.python-version }}
           ansible-test units --requirements --python ${{ matrix.python-version }}
