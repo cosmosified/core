@@ -9,7 +9,7 @@ __metaclass__ = type
 import re
 from ansible_collections.pfsensible.core.plugins.module_utils.module_base import PFSenseModuleBase
 from ansible_collections.pfsensible.core.plugins.module_utils.rule import PFSenseRuleModule
-from ansible_collections.pfsensible.core.plugins.module_utils.compat.ipaddress import ip_network
+from ipaddress import ip_network
 
 INTERFACE_ARGUMENT_SPEC = dict(
     state=dict(default='present', choices=['present', 'absent']),
@@ -141,6 +141,9 @@ class PFSenseInterfaceModule(PFSenseModuleBase):
 
         else:
             self.target_elt = self._get_interface_elt_by_display_name(self.obj['descr'])
+
+        if self.target_elt is not None:
+            self.result['ifname'] = self.target_elt.tag
 
         return obj
 

@@ -23,11 +23,11 @@ author: Orion Poplawski (@opoplawski)
 notes:
 options:
   name:
-    description: The name of the user
+    description: The name of the user.
     required: true
     type: str
   state:
-    description: State in which to leave the user
+    description: State in which to leave the user.
     default: present
     choices: [ "present", "absent" ]
     type: str
@@ -35,7 +35,7 @@ options:
     description: Description of the user
     type: str
   scope:
-    description: Scope of the user ('user' is a normal user)
+    description: Scope of the user ('user' is a normal user, use 'system' for 'admin' user).
     default: user
     choices: [ "user", "system" ]
     type: str
@@ -45,13 +45,11 @@ options:
     - Will use next available UID if not specified.
     type: str
   groups:
-    description:
-    - Groups of the user.
+    description: Groups of the user.
     type: list
     elements: str
   password:
-    description:
-    - bcrypt encrypted password of the user.
+    description: bcrypt encrypted password of the user.
     type: str
   priv:
     description:
@@ -60,8 +58,7 @@ options:
     type: list
     elements: str
   authorizedkeys:
-    description:
-    - Contents of ~/.ssh/authorized_keys.  Can be base64 encoded.
+    description: Contents of ~/.ssh/authorized_keys.  Can be base64 encoded.
     type: str
 """
 
@@ -156,7 +153,7 @@ class PFSenseUserModule(PFSenseModuleBase):
         params = self.params
         if 'password' in params and params['password'] is not None:
             password = params['password']
-            if re.match(r'\$2b\$', str(password)):
+            if re.match(r'\$2[aby]\$', str(password)):
                 params['bcrypt-hash'] = password
             else:
                 self.module.fail_json(msg='Password (%s) does not appear to be a bcrypt hash' % password)

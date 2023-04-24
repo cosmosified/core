@@ -63,7 +63,7 @@ class PFSenseModule(object):
         self.tree = ET.parse(config)
         self.root = self.tree.getroot()
         self.config_version = float(self.get_element('version').text)
-        self.aliases = self.get_element('aliases')
+        self.aliases = self.get_element('aliases', create_node=True)
         self.interfaces = self.get_element('interfaces')
         self.ifgroups = self.get_element('ifgroups')
         self.rules = self.get_element('filter')
@@ -210,7 +210,7 @@ class PFSenseModule(object):
             return floating
         elif floating:
             return False
-        return interface_elt is not None and interface_elt.text == interface
+        return interface_elt is not None and interface_elt.text.lower() == interface.lower()
 
     def get_interface_rules_count(self, interface, floating):
         """ get rules count in interface/floating """
@@ -311,6 +311,17 @@ class PFSenseModule(object):
         return changed
 
     @staticmethod
+    def dict_to_php(src, php_name):
+        """ Generate PHP commands to initialiaze a variable with contents of a dict """
+        cmd = "${0} = array();\n".format(php_name)
+        for key, value in src.items():
+            if value is not None:
+                cmd += "${0}['{1}'] = '{2}';\n".format(php_name, key, value)
+            else:
+                cmd += "${0}['{1}'] = '';\n".format(php_name, key)
+        return cmd
+
+    @staticmethod
     def element_to_dict(src_elt):
         """ Create dict from XML src_elt """
         res = {}
@@ -364,8 +375,7 @@ class PFSenseModule(object):
         # Is it an alias?
         if (self.find_alias(address, 'host') is not None
                 or self.find_alias(address, 'network') is not None
-                or self.find_alias(address, 'urltable') is not None
-                or self.find_alias(address, 'urltable_ports') is not None):
+                or self.find_alias(address, 'urltable') is not None):
             return True
 
         # Is it an IP address or network?
@@ -377,7 +387,8 @@ class PFSenseModule(object):
 
     def is_port_or_alias(self, port):
         """ return True if port is a valid port number or an alias """
-        if self.find_alias(port, 'port') is not None:
+        if (self.find_alias(port, 'port') is not None
+                or self.find_alias(port, 'urltable_ports') is not None):
             return True
         try:
             if int(port) > 0 and int(port) < 65536:
@@ -577,9 +588,9 @@ class PFSenseModule(object):
     def uniqid(prefix='', more_entropy=False):
         """ return an identifier based on time """
         if more_entropy:
-            return prefix + hex(int(time.time()))[2:10] + hex(int(time.time() * 1000000) % 0x100000)[2:7] + "%.8F" % (random.random() * 10)
+            return prefix + '{0:x}{1:05x}{2:.8F}'.format(int(time.time()), int(time.time() * 1000000) % 0x100000, random.random() * 10)
 
-        return prefix + hex(int(time.time()))[2:10] + hex(int(time.time() * 1000000) % 0x100000)[2:7]
+        return prefix + '{0:x}{1:05x}'.format(int(time.time()), int(time.time() * 1000000) % 0x100000)
 
     def phpshell(self, command):
         """ Run a command in the php developer shell """
@@ -659,11 +670,17 @@ class PFSenseModule(object):
         for idx, ver in enumerate(version):
             if idx == len(self.pfsense_version):
                 return True
+            if self.pfsense_version[idx] > ver and or_more:
+                return True
 
             if ver < self.pfsense_version[idx] and not or_more or ver > self.pfsense_version[idx]:
                 return False
 
         return True
+
+    def is_at_least_2_5_2(self):
+        """ check target pfSense version """
+        return self.is_version([2, 5, 2]) or self.is_version([21, 5])
 
     def is_at_least_2_5_0(self):
         """ check target pfSense version """

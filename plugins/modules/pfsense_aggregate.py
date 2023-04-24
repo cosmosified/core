@@ -81,6 +81,7 @@ options:
         type: str
       enable:
         description: Enable interface.
+        default: no
         type: bool
       ipv4_type:
         description: IPv4 Configuration Type.
@@ -250,6 +251,11 @@ options:
       interface:
         description: The interface for the rule
         required: false
+        type: str
+      ipprotocol:
+        description: The IP protocol
+        default: inet
+        choices: [ "inet", "inet6" ]
         type: str
       protocol:
         description: Which protocol this rule should match.
@@ -472,7 +478,7 @@ options:
         type: int
       descr:
         description: The description of the VLAN
-        default: null
+        default: ''
         type: str
       state:
         description: State in which to leave the VLAN

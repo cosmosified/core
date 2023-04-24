@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2019, Frederic Bor <frederic.bor@wanadoo.fr>
+# Copyright: (c) 2023, Orion Poplwski <orion@nwra.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,6 +16,7 @@ NAT_PORT_FORWARD_ARGUMENT_SPEC = dict(
     disabled=dict(default=False, required=False, type='bool'),
     nordr=dict(default=False, required=False, type='bool'),
     interface=dict(required=False, type='str'),
+    ipprotocol=dict(default='inet', choices=['inet', 'inet6']),
     protocol=dict(default='tcp', required=False, choices=["tcp", "udp", "tcp/udp", "icmp", "esp", "ah", "gre", "ipv6", "igmp", "pim", "ospf"]),
     source=dict(required=False, type='str'),
     destination=dict(required=False, type='str'),
@@ -69,6 +71,7 @@ class PFSenseNatPortForwardModule(PFSenseModuleBase):
         obj['descr'] = self.params['descr']
         if self.params['state'] == 'present':
             obj['interface'] = self.pfsense.parse_interface(self.params['interface'])
+            self._get_ansible_param(obj, 'ipprotocol')
             self._get_ansible_param(obj, 'protocol')
             self._get_ansible_param(obj, 'poolopts')
             self._get_ansible_param(obj, 'source_hash_key')
@@ -120,10 +123,20 @@ class PFSenseNatPortForwardModule(PFSenseModuleBase):
         else:
             self.module.fail_json(msg='"%s" is not a valid redirect target IP address or host alias.' % (param))
 
-        if ports is not None and self.pfsense.is_port_or_alias(ports):
-            obj['local-port'] = ports
-        else:
-            self.module.fail_json(msg='"{0}" is not a valid redirect target port. It must be a port alias or integer between 1 and 65535.'.format(ports))
+        if ports is None:
+            if self.params['protocol'] in ["tcp", "udp", "tcp/udp"]:
+                self.module.fail_json(msg='Must specify a target port with protocol "{0}".'.format(self.params['protocol']))
+            else:
+                # pfSense seems to always add an empty local-port element
+                obj['local-port'] = ''
+
+        if ports is not None:
+            if self.params['protocol'] not in ["tcp", "udp", "tcp/udp"]:
+                self.module.fail_json(msg='Cannot specify a target port with protocol "{0}".'.format(self.params['protocol']))
+            elif self.pfsense.is_port_or_alias(ports):
+                obj['local-port'] = ports
+            else:
+                self.module.fail_json(msg='"{0}" is not a valid redirect target port. It must be a port alias or integer between 1 and 65535.'.format(ports))
 
     def _validate_params(self):
         """ do some extra checks on input parameters """
@@ -382,6 +395,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('natconf'); clear_subsystem
             values += self.format_cli_field(self.params, 'disabled', fvalue=self.fvalue_bool, default=False)
             values += self.format_cli_field(self.params, 'nordr', fvalue=self.fvalue_bool, default=False)
             values += self.format_cli_field(self.params, 'interface')
+            values += self.format_cli_field(self.params, 'ipprotocol', default='inet')
             values += self.format_cli_field(self.params, 'protocol', default='tcp')
             values += self.format_cli_field(self.params, 'source')
             values += self.format_cli_field(self.params, 'destination')
@@ -399,6 +413,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('natconf'); clear_subsystem
             values += self.format_updated_cli_field(self.obj, before, 'disabled', fvalue=self.fvalue_bool, default=False, add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'nordr', fvalue=self.fvalue_bool, default=False, add_comma=(values))
             values += self.format_updated_cli_field(fafter, fbefore, 'interface', add_comma=(values))
+            values += self.format_updated_cli_field(self.obj, before, 'ipprotocol', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'protocol', fvalue=self.fprotocol, add_comma=(values))
             values += self.format_updated_cli_field(fafter, fbefore, 'source', add_comma=(values))
             values += self.format_updated_cli_field(fafter, fbefore, 'destination', add_comma=(values))
@@ -436,7 +451,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('natconf'); clear_subsystem
         res = {}
         res['source'] = self._obj_address_to_log_field(rule, 'source')
         res['destination'] = self._obj_address_to_log_field(rule, 'destination')
-        res['target'] = rule['target'] + ':' + rule['local-port']
+        res['target'] = rule['target']
+        if 'local-port' in rule:
+            res['target'] += ':' + rule['local-port']
         res['interface'] = self.pfsense.get_interface_display_name(rule['interface'])
 
         return res

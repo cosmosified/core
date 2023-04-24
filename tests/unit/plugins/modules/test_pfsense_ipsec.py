@@ -34,10 +34,10 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
     ##############
     # tests utils
     #
-    def get_target_elt(self, ipsec, absent=False):
+    def get_target_elt(self, obj, absent=False):
         """ get the generated ipsec xml definition """
         elt_filter = {}
-        elt_filter['descr'] = ipsec['descr']
+        elt_filter['descr'] = obj['descr']
 
         return self.assert_has_xml_tag('ipsec', elt_filter, absent=absent)
 
@@ -59,113 +59,114 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
             return '5c00e5f9029de'
         return ''
 
-    def check_target_elt(self, ipsec, ipsec_elt):
+    def check_target_elt(self, obj, target_elt):
         """ test the xml definition of ipsec elt """
 
         # bools
-        if ipsec.get('disabled'):
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'disabled')
+        if obj.get('disabled'):
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'disabled')
         else:
-            self.assert_not_find_xml_elt(ipsec_elt, 'disabled')
+            self.assert_not_find_xml_elt(target_elt, 'disabled')
 
         if self.get_version.return_value == "2.4.4":
-            if ipsec.get('disable_rekey'):
-                self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'disable_rekey')
-                self.assert_not_find_xml_elt(ipsec_elt, 'margintime')
+            if obj.get('disable_rekey'):
+                self.assert_xml_elt_is_none_or_empty(target_elt, 'disable_rekey')
+                self.assert_not_find_xml_elt(target_elt, 'margintime')
             else:
-                self.assert_not_find_xml_elt(ipsec_elt, 'disable_rekey')
-                if ipsec.get('margintime'):
-                    self.assert_xml_elt_equal(ipsec_elt, 'margintime', ipsec['margintime'])
+                self.assert_not_find_xml_elt(target_elt, 'disable_rekey')
+                if obj.get('margintime'):
+                    self.assert_xml_elt_equal(target_elt, 'margintime', obj['margintime'])
                 else:
-                    self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'margintime')
+                    self.assert_xml_elt_is_none_or_empty(target_elt, 'margintime')
         else:
-            self.check_param_bool(ipsec, ipsec_elt, 'gw_duplicates')
-            self.check_param_equal_or_not_find(ipsec, ipsec_elt, 'nattport')
-            self.check_param_equal(ipsec, ipsec_elt, 'rekey_time')
-            self.check_param_equal(ipsec, ipsec_elt, 'reauth_time')
-            self.check_param_equal(ipsec, ipsec_elt, 'rand_time')
+            self.check_param_bool(obj, target_elt, 'gw_duplicates')
+            self.check_param_equal_or_not_find(obj, target_elt, 'nattport')
+            self.check_param_equal(obj, target_elt, 'rekey_time')
+            self.check_param_equal(obj, target_elt, 'reauth_time')
+            self.check_param_equal(obj, target_elt, 'rand_time')
 
-        if ipsec.get('responderonly'):
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'responderonly')
+        # Added in 2.5.2
+        if obj.get('startaction'):
+            self.assert_xml_elt_equal(target_elt, 'startaction', obj['startaction'])
+        if obj.get('closeaction'):
+            self.assert_xml_elt_equal(target_elt, 'closeaction', obj['closeaction'])
+
+        if obj.get('disable_reauth'):
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'reauth_enable')
         else:
-            self.assert_not_find_xml_elt(ipsec_elt, 'responderonly')
+            self.assert_not_find_xml_elt(target_elt, 'reauth_enable')
 
-        if ipsec.get('disable_reauth'):
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'reauth_enable')
+        if obj.get('splitconn'):
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'splitconn')
         else:
-            self.assert_not_find_xml_elt(ipsec_elt, 'reauth_enable')
+            self.assert_not_find_xml_elt(target_elt, 'splitconn')
 
-        if ipsec.get('splitconn'):
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'splitconn')
-        else:
-            self.assert_not_find_xml_elt(ipsec_elt, 'splitconn')
-
-        if ipsec.get('enable_dpd') is None or ipsec.get('enable_dpd'):
-            if ipsec.get('dpd_delay') is not None:
-                self.assert_xml_elt_equal(ipsec_elt, 'dpd_delay', ipsec['dpd_delay'])
+        if obj.get('enable_dpd') is None or obj.get('enable_dpd'):
+            if obj.get('dpd_delay') is not None:
+                self.assert_xml_elt_equal(target_elt, 'dpd_delay', obj['dpd_delay'])
             else:
-                self.assert_xml_elt_equal(ipsec_elt, 'dpd_delay', '10')
+                self.assert_xml_elt_equal(target_elt, 'dpd_delay', '10')
 
-            if ipsec.get('dpd_maxfail') is not None:
-                self.assert_xml_elt_equal(ipsec_elt, 'dpd_maxfail', ipsec['dpd_maxfail'])
+            if obj.get('dpd_maxfail') is not None:
+                self.assert_xml_elt_equal(target_elt, 'dpd_maxfail', obj['dpd_maxfail'])
             else:
-                self.assert_xml_elt_equal(ipsec_elt, 'dpd_maxfail', '5')
+                self.assert_xml_elt_equal(target_elt, 'dpd_maxfail', '5')
         else:
-            self.assert_not_find_xml_elt(ipsec_elt, 'dpd_delay')
-            self.assert_not_find_xml_elt(ipsec_elt, 'dpd_maxfail')
+            self.assert_not_find_xml_elt(target_elt, 'dpd_delay')
+            self.assert_not_find_xml_elt(target_elt, 'dpd_maxfail')
 
-        if ipsec.get('mobike'):
-            self.assert_xml_elt_equal(ipsec_elt, 'mobike', ipsec['mobike'])
+        if obj.get('mobike'):
+            self.assert_xml_elt_equal(target_elt, 'mobike', obj['mobike'])
 
         # iketype & mode
-        self.assert_xml_elt_equal(ipsec_elt, 'iketype', ipsec['iketype'])
-        if ipsec.get('mode') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'mode', ipsec['mode'])
+        self.assert_xml_elt_equal(target_elt, 'iketype', obj['iketype'])
+        if obj.get('mode') is not None:
+            self.assert_xml_elt_equal(target_elt, 'mode', obj['mode'])
 
-        if ipsec.get('nat_traversal') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'nat_traversal', ipsec['nat_traversal'])
+        if obj.get('nat_traversal') is not None:
+            self.assert_xml_elt_equal(target_elt, 'nat_traversal', obj['nat_traversal'])
         else:
-            self.assert_xml_elt_equal(ipsec_elt, 'nat_traversal', 'on')
+            self.assert_xml_elt_equal(target_elt, 'nat_traversal', 'on')
 
         # auth
-        self.assert_xml_elt_equal(ipsec_elt, 'authentication_method', ipsec['authentication_method'])
-        if ipsec['authentication_method'] == 'rsasig':
-            self.assert_xml_elt_equal(ipsec_elt, 'certref', self.certref(ipsec['certificate']))
-            self.assert_xml_elt_equal(ipsec_elt, 'caref', self.caref(ipsec['certificate_authority']))
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'pre-shared-key')
+        self.assert_xml_elt_equal(target_elt, 'authentication_method', obj['authentication_method'])
+        if obj['authentication_method'] == 'rsasig':
+            self.assert_xml_elt_equal(target_elt, 'certref', self.certref(obj['certificate']))
+            self.assert_xml_elt_equal(target_elt, 'caref', self.caref(obj['certificate_authority']))
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'pre-shared-key')
         else:
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'certref')
-            self.assert_xml_elt_is_none_or_empty(ipsec_elt, 'caref')
-            self.assert_xml_elt_equal(ipsec_elt, 'pre-shared-key', ipsec['preshared_key'])
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'certref')
+            self.assert_xml_elt_is_none_or_empty(target_elt, 'caref')
+            self.assert_xml_elt_equal(target_elt, 'pre-shared-key', obj['preshared_key'])
 
         # ids
-        if ipsec.get('myid_type') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'myid_type', ipsec['myid_type'])
+        if obj.get('myid_type') is not None:
+            self.assert_xml_elt_equal(target_elt, 'myid_type', obj['myid_type'])
         else:
-            self.assert_xml_elt_equal(ipsec_elt, 'myid_type', 'myaddress')
-        if ipsec.get('myid_data') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'myid_data', ipsec['myid_data'])
+            self.assert_xml_elt_equal(target_elt, 'myid_type', 'myaddress')
+        if obj.get('myid_data') is not None:
+            self.assert_xml_elt_equal(target_elt, 'myid_data', obj['myid_data'])
 
-        if ipsec.get('peerid_type') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'peerid_type', ipsec['peerid_type'])
+        if obj.get('peerid_type') is not None:
+            self.assert_xml_elt_equal(target_elt, 'peerid_type', obj['peerid_type'])
         else:
-            self.assert_xml_elt_equal(ipsec_elt, 'peerid_type', 'peeraddress')
-        if ipsec.get('peerid_data') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'peerid_data', ipsec['peerid_data'])
+            self.assert_xml_elt_equal(target_elt, 'peerid_type', 'peeraddress')
+        if obj.get('peerid_data') is not None:
+            self.assert_xml_elt_equal(target_elt, 'peerid_data', obj['peerid_data'])
 
         # misc
-        self.assert_xml_elt_equal(ipsec_elt, 'interface', self.unalias_interface(ipsec['interface']))
+        self.assert_xml_elt_equal(target_elt, 'interface', self.unalias_interface(obj['interface']))
 
-        if ipsec.get('protocol') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'protocol', ipsec['protocol'])
+        if obj.get('protocol') is not None:
+            self.assert_xml_elt_equal(target_elt, 'protocol', obj['protocol'])
         else:
-            self.assert_xml_elt_equal(ipsec_elt, 'protocol', 'inet')
-        self.assert_xml_elt_equal(ipsec_elt, 'remote-gateway', ipsec['remote_gateway'])
+            self.assert_xml_elt_equal(target_elt, 'protocol', 'inet')
+        self.assert_xml_elt_equal(target_elt, 'remote-gateway', obj['remote_gateway'])
 
-        if ipsec.get('lifetime') is not None:
-            self.assert_xml_elt_equal(ipsec_elt, 'lifetime', ipsec['lifetime'])
+        if obj.get('lifetime') is not None:
+            self.assert_xml_elt_equal(target_elt, 'lifetime', obj['lifetime'])
         else:
-            self.assert_xml_elt_equal(ipsec_elt, 'lifetime', '28800')
+            self.assert_xml_elt_equal(target_elt, 'lifetime', '28800')
 
     def strip_commands(self, commands):
         if self.get_version.return_value.startswith("2.4."):
@@ -188,22 +189,8 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
     ##############
     # tests
     #
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_ikev2(self, pfsense_version):
-        """ test creation of a new ipsec tunnel """
-        self.get_version.return_value = pfsense_version
-        ipsec = dict(
-            descr='new_tunnel', interface='lan_100', remote_gateway='1.2.3.4', nattport=4501, iketype='ikev2',
-            authentication_method='pre_shared_key', preshared_key='1234')
-        command = (
-            "create ipsec 'new_tunnel', iketype='ikev2', protocol='inet', interface='lan_100', remote_gateway='1.2.3.4', nattport='4501', "
-            "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
-            "rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', mobike='off', responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
-        self.do_module_test(ipsec, command=command)
-
-    def test_ipsec_create_ikev2_2_5_0(self):
-        """ test creation of a new ipsec tunnel with 2.5.0 params """
+    def test_ipsec_create_ikev2(self):
+        """ test creation of a new ipsec tunnel with 2.5.2 params """
         ipsec = dict(
             descr='new_tunnel', interface='lan_100', remote_gateway='1.2.3.4', nattport=4501, iketype='ikev2',
             authentication_method='pre_shared_key', preshared_key='1234', gw_duplicates=True, rekey_time=2500, reauth_time=2600, rand_time=2700)
@@ -211,55 +198,47 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
             "create ipsec 'new_tunnel', iketype='ikev2', protocol='inet', interface='lan_100', remote_gateway='1.2.3.4', nattport='4501', "
             "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
             "rekey_time='2500', reauth_time='2600', rand_time='2700', "
-            "mobike='off', gw_duplicates=True, responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
+            "mobike='off', gw_duplicates=True, startaction='', closeaction='', nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
         self.do_module_test(ipsec, command=command)
 
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_ikev1(self, pfsense_version):
+    def test_ipsec_create_ikev1(self):
         """ test creation of a new ipsec tunnel """
-        self.get_version.return_value = pfsense_version
         ipsec = dict(
             descr='new_tunnel', interface='lan_100', remote_gateway='1.2.3.4', iketype='ikev1',
-            authentication_method='pre_shared_key', preshared_key='1234', mode='main')
+            authentication_method='pre_shared_key', preshared_key='1234', mode='main', startaction='none', closeaction='none')
         command = (
             "create ipsec 'new_tunnel', iketype='ikev1', mode='main', protocol='inet', interface='lan_100', remote_gateway='1.2.3.4', "
             "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
             "rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
+            "disable_rekey=False, margintime='', startaction='none', closeaction='none', nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
         self.do_module_test(ipsec, command=command)
 
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_vip_descr(self, pfsense_version):
+    def test_ipsec_create_vip_descr(self):
         """ test creation of a new ipsec tunnel with vip: interface name """
-        self.get_version.return_value = pfsense_version
         ipsec = dict(
             descr='new_tunnel', interface='vip:WAN CARP', remote_gateway='1.2.3.4', iketype='ikev1',
-            authentication_method='pre_shared_key', preshared_key='1234', mode='main')
+            authentication_method='pre_shared_key', preshared_key='1234', mode='main', startaction='start', closeaction='start')
         command = (
             "create ipsec 'new_tunnel', iketype='ikev1', mode='main', protocol='inet', interface='vip:WAN CARP', remote_gateway='1.2.3.4', "
             "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
-            "rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
+            "rekey_time='', reauth_time='', rand_time='', disable_rekey=False, margintime='', startaction='start', closeaction='start', "
+            "nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
         self.do_module_test(ipsec, command=command)
 
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_vip_subnet(self, pfsense_version):
+    def test_ipsec_create_vip_subnet(self):
         """ test creation of a new ipsec tunnel with vip: interface address """
-        self.get_version.return_value = pfsense_version
         ipsec = dict(
             descr='new_tunnel', interface='vip:151.25.19.11', remote_gateway='1.2.3.4', iketype='ikev1',
-            authentication_method='pre_shared_key', preshared_key='1234', mode='main')
+            authentication_method='pre_shared_key', preshared_key='1234', mode='main', startaction='trap', closeaction='trap')
         command = (
             "create ipsec 'new_tunnel', iketype='ikev1', mode='main', protocol='inet', interface='vip:151.25.19.11', remote_gateway='1.2.3.4', "
             "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
             "rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
+            "disable_rekey=False, margintime='', startaction='trap', closeaction='trap', nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
         self.do_module_test(ipsec, command=command)
 
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_auto(self, pfsense_version):
+    def test_ipsec_create_auto(self):
         """ test creation of a new ipsec tunnel """
-        self.get_version.return_value = pfsense_version
         ipsec = dict(
             descr='new_tunnel', interface='lan_100', remote_gateway='1.2.3.4', iketype='auto',
             authentication_method='pre_shared_key', preshared_key='1234', mode='main')
@@ -267,22 +246,7 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
             "create ipsec 'new_tunnel', iketype='auto', mode='main', protocol='inet', interface='lan_100', remote_gateway='1.2.3.4', "
             "authentication_method='pre_shared_key', preshared_key='1234', myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', "
             "rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', responderonly=False, nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
-        self.do_module_test(ipsec, command=command)
-
-    @parameterized.expand([["2.4.4"], ["2.5.0"]])
-    def test_ipsec_create_auto_rsasig(self, pfsense_version):
-        """ test creation of a new ipsec tunnel with certificate """
-        self.get_version.return_value = pfsense_version
-        ipsec = dict(
-            descr='new_tunnel', interface='lan_100', remote_gateway='1.2.3.4', iketype='ikev2',
-            authentication_method='rsasig', certificate='webConfigurator default (5c00e5f9029df)', certificate_authority='test ca')
-        command = (
-            "create ipsec 'new_tunnel', iketype='ikev2', protocol='inet', interface='lan_100', remote_gateway='1.2.3.4', "
-            "authentication_method='rsasig', certificate='webConfigurator default (5c00e5f9029df)', certificate_authority='test ca', "
-            "myid_type='myaddress', peerid_type='peeraddress', lifetime='28800', rekey_time='', reauth_time='', rand_time='', "
-            "disable_rekey=False, margintime='', mobike='off', responderonly=False, "
-            "nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
+            "disable_rekey=False, margintime='', startaction='', closeaction='', nat_traversal='on', enable_dpd=True, dpd_delay='10', dpd_maxfail='5'")
         self.do_module_test(ipsec, command=command)
 
     def test_ipsec_delete(self):
