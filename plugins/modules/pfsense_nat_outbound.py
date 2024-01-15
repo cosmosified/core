@@ -49,12 +49,12 @@ options:
     choices: [ "any", "tcp", "udp", "tcp/udp", "icmp", "esp", "ah", "gre", "ipv6", "igmp", "carp", "pfsync" ]
     type: str
   source:
-    description: The matching source address, in {any,(self),ALIAS,NETWORK}[:port] format.
+    description: The matching source address, in {any,(self),ALIAS,NETWORK,NET:INTERFACE}[:port] format.
     required: false
     default: null
     type: str
   destination:
-    description: The matching destination address, in {any,ALIAS,NETWORK}[:port] format.
+    description: The matching destination address, in {any,ALIAS,NETWORK,NET:INTERFACE}[:port] format.
     required: false
     default: null
     type: str
@@ -123,13 +123,13 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.pfsensible.core.plugins.module_utils.nat_outbound import PFSenseNatOutboundModule, NAT_OUTBOUND_ARGUMENT_SPEC, NAT_OUTBOUD_REQUIRED_IF
+from ansible_collections.pfsensible.core.plugins.module_utils.nat_outbound import PFSenseNatOutboundModule, NAT_OUTBOUND_ARGUMENT_SPEC, NAT_OUTBOUND_REQUIRED_IF
 
 
 def main():
     module = AnsibleModule(
         argument_spec=NAT_OUTBOUND_ARGUMENT_SPEC,
-        required_if=NAT_OUTBOUD_REQUIRED_IF,
+        required_if=NAT_OUTBOUND_REQUIRED_IF,
         supports_check_mode=True)
 
     pfmodule = PFSenseNatOutboundModule(module)

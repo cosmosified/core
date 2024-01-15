@@ -13,7 +13,6 @@ if sys.version_info < (2, 7):
 from ansible_collections.pfsensible.core.plugins.modules import pfsense_ipsec
 from ansible_collections.pfsensible.core.plugins.module_utils.ipsec import PFSenseIpsecModule
 from .pfsense_module import TestPFSenseModule
-from parameterized import parameterized
 
 
 class TestPFSenseIpsecModule(TestPFSenseModule):
@@ -34,7 +33,7 @@ class TestPFSenseIpsecModule(TestPFSenseModule):
     ##############
     # tests utils
     #
-    def get_target_elt(self, obj, absent=False):
+    def get_target_elt(self, obj, absent=False, module_result=None):
         """ get the generated ipsec xml definition """
         elt_filter = {}
         elt_filter['descr'] = obj['descr']

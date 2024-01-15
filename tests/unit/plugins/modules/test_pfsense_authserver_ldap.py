@@ -10,10 +10,8 @@ import sys
 if sys.version_info < (2, 7):
     pytestmark = pytest.mark.skip("pfSense Ansible modules require Python >= 2.7")
 
-from xml.etree.ElementTree import fromstring, ElementTree
-from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.pfsensible.core.plugins.modules import pfsense_authserver_ldap
-from .pfsense_module import TestPFSenseModule, load_fixture
+from .pfsense_module import TestPFSenseModule
 
 
 class TestPFSenseAuthserverLDAPModule(TestPFSenseModule):
@@ -30,7 +28,7 @@ class TestPFSenseAuthserverLDAPModule(TestPFSenseModule):
         """ dummy function needed to instantiate this test module from another in python 2.7 """
         pass
 
-    def get_target_elt(self, obj, absent=False):
+    def get_target_elt(self, obj, absent=False, module_result=None):
         """ return target elt from XML """
         root_elt = self.assert_find_xml_elt(self.xml_result, 'system')
         result = root_elt.findall("authserver[name='{0}']".format(obj['name']))

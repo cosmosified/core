@@ -10,11 +10,9 @@ import sys
 if sys.version_info < (2, 7):
     pytestmark = pytest.mark.skip("pfSense Ansible modules require Python >= 2.7")
 
-from xml.etree.ElementTree import fromstring, ElementTree
-from ansible_collections.community.internal_test_tools.tests.unit.compat.mock import patch
 from ansible_collections.pfsensible.core.plugins.modules import pfsense_rule
 from ansible_collections.pfsensible.core.plugins.module_utils.rule import PFSenseRuleModule
-from .pfsense_module import TestPFSenseModule, load_fixture
+from .pfsense_module import TestPFSenseModule
 
 
 class TestPFSenseRuleModule(TestPFSenseModule):
@@ -77,7 +75,7 @@ class TestPFSenseRuleModule(TestPFSenseModule):
         if 'not' not in addr_dict:
             self.assert_not_find_xml_elt(addr_elt, 'not')
 
-    def get_target_elt(self, obj, absent=False):
+    def get_target_elt(self, obj, absent=False, module_result=None):
         """ return target elt from XML """
         obj['interface'] = self.unalias_interface(obj['interface'])
         if 'floating' in obj and obj['floating'] == 'yes':
